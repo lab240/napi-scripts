@@ -6,6 +6,7 @@
 
 - bh1750 script (with --influx-output parameter support)
 - sht30 script (with --influx-output parameter support)
+- bme280 script (with --influx-output parameter support)
 - bmp280 script (with --influx-output parameter support)
 - SPI display demo
 - rtc demo
