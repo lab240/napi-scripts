@@ -8,11 +8,13 @@
 - sht30 script (with --influx-output parameter support)
 - bmp280 script (with --influx-output parameter support)
 - SPI display demo
+- rtc demo
+- gpio demo
 
 Download and unzip this repo without git:
 
 ```
-curl -L -o master.zip  http://github.com/lab240/napi-scripts/archive/master.zip && unzip master.zip
+curl -L -k -o master.zip  http://github.com/lab240/napi-scripts/archive/master.zip && unzip master.zip
 
 ```
 
