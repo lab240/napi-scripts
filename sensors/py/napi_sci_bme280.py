@@ -1,4 +1,5 @@
 """
+
 This script reads bmp280 sensor and 
 outputs result in human format or
 in influx format for write to influx database (--influx-output)
@@ -16,14 +17,14 @@ This is part of telegraf config to exec this script
 For correct work, you need packages installed
 
 pip3 install smbus2
-pip3 install bmp280
+pip3 install pimoroni-bme280
 """
 
 import argparse
 import socket
 import time
 from smbus2 import SMBus
-from bmp280 import BMP280  # Using the bmp280 library for the sensor
+from bme280 import BME280  # Using the bme280 library for the sensor
 
 def check_bmp280(bus, address=0x76):
     """
@@ -34,26 +35,27 @@ def check_bmp280(bus, address=0x76):
     :return: True if the sensor is found, False otherwise
     """
     try:
-        bmp280 = BMP280(i2c_dev=bus)
+        bus.write_quick(address)
         return True
     except OSError:
         return False
 
 def read_bmp280(bus, address=0x76, prec=2):
     """
-    Read temperature and pressure data from the BMP280 sensor.
+    Read temperature, pressure, and humidity data from the BMP280/BME280 sensor.
     
     :param bus: I2C bus instance
     :param address: Sensor's I2C address (default 0x76)
     :param prec: Number of decimal places for rounding the results
-    :return: Rounded temperature and pressure values
+    :return: Rounded temperature, pressure, and humidity values
     """
-    bmp280 = BMP280(i2c_dev=bus)
-    temperature = bmp280.get_temperature()
-    pressure = bmp280.get_pressure()
-    return round(temperature, prec), round(pressure, prec)
+    bme280 = BME280(i2c_dev=bus)
+    temperature = bme280.get_temperature()
+    pressure = bme280.get_pressure()
+    humidity = bme280.get_humidity()
+    return round(temperature, prec), round(pressure, prec), round(humidity, prec)
 
-def output_influx(hostname, sensor_name, temperature, pressure, multiplier=100):
+def output_influx(hostname, sensor_name, temperature, pressure, humidity, multiplier=100):
     """
     Output sensor data in InfluxDB line protocol format.
 
@@ -61,6 +63,7 @@ def output_influx(hostname, sensor_name, temperature, pressure, multiplier=100):
     :param sensor_name: Name of the sensor
     :param temperature: Measured temperature in degrees Celsius
     :param pressure: Measured pressure in Pascals
+    :param humidity: Measured humidity in percentage
     :param multiplier: Multiplier for converting to integer values
     """
     timestamp = int(time.time() * 1e9)
@@ -68,10 +71,11 @@ def output_influx(hostname, sensor_name, temperature, pressure, multiplier=100):
     # Convert values to integers using the multiplier
     temperature = int(temperature * multiplier)
     pressure = int(pressure * multiplier)
+    humidity = int(humidity * multiplier)
 
     # Output data in InfluxDB format with 'multiplier' as a tag
     print(f"{sensor_name},hostname={hostname},name={sensor_name},multiplier={multiplier} "
-          f"bmp280_temp={temperature},bmp280_pressure={pressure} {timestamp}")
+          f"bme280_temp={temperature},bme280_pressure={pressure},bme280_humidity={humidity} {timestamp}")
 
 def main():
     # Parsing command-line arguments
@@ -97,15 +101,16 @@ def main():
     if check_bmp280(bus):
         while True:
             # Read data from the BMP280 sensor
-            temperature, pressure = read_bmp280(bus, prec=args.decimal_places)
+            temperature, pressure, humidity = read_bmp280(bus, prec=args.decimal_places)
 
             if args.influx_output:
                 # Output data in InfluxDB format
-                output_influx(hostname, "bmp280", temperature, pressure, args.multiplier)
+                output_influx(hostname, "bmp280", temperature, pressure, humidity, args.multiplier)
             else:
                 # Standard output with the specified number of decimal places
                 print(f"Temperature: {temperature:.{args.decimal_places}f} °C, "
-                      f"Pressure: {pressure:.{args.decimal_places}f} Pa")
+                      f"Pressure: {pressure:.{args.decimal_places}f} Pa, "
+                      f"Humidity: {humidity:.{args.decimal_places}f} %")
 
             if not args.loop:
                 break
