@@ -13,10 +13,15 @@ from smbus2 import SMBus
 SPI_PORT = 2
 SPI_DEVICE = 0
 
-rstpin = 7  # GPIO2_A7
-rstchip = "/dev/gpiochip2"
-dcpin = 9  # GPIO2_B1
+#rstpin = 7  # GPIO2_A7
+#rstchip = "/dev/gpiochip2"
+#dcpin = 9  # GPIO2_B1
+#dcchip = "/dev/gpiochip2"
+
+dcpin = 7  # GPIO2_A7
 dcchip = "/dev/gpiochip2"
+rstpin = 9  # GPIO2_B1
+rstchip = "/dev/gpiochip2"
 
 spi = spidev.SpiDev()
 spi.open(SPI_PORT, SPI_DEVICE)
@@ -47,19 +52,13 @@ while True:
     draw.text((0, 10), f"HWDate:{hw_date}", font=font, fill=0)
     draw.text((0, 20), f"HWTime:{hw_time}", font=font, fill=0)
     
-    if sht30.check_sht30(bus):
-        temp, humidity = sht30.read_sht30(bus,0x45)
-        draw.text((0, 30), f"Temp:{temp}, Hum: {humidity}", font=font, fill=0)
-    else:
-        draw.text((0, 30), f"ERROR reading", font=font, fill=0)
-
-
     hw.user_led_sw()
     hw.relay_sw()
 
     draw.text((0, 40), f"LED: {hw.get_led_status()}, RELAY: {hw.get_relay_status()}", font=font, fill=0)
     draw.text((0, 50), f"USER SW: {hw.get_sw_status()}", font=font, fill=0)
+    
+    print(f"HWDate:{hw_date}; HWTime:{hw_time}; LED:{hw.get_led_status()}; RELAY:{hw.get_relay_status()}");
 
     disp.ShowImage(disp.getbuffer(image))
-    print(f"HWTime:{hw_time}: Temp:{temp}, Hum: {humidity}") 
     time.sleep(0.5)
